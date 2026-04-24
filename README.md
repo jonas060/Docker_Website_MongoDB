@@ -8,26 +8,26 @@ The project creates a compose stack of 4 services which ultimately creates a web
 
 ## 📋 Steps to reproduce
 1. **Navigate to project location and run "docker compose build"** - This command will build our services (images) defined in the Docker-Compose.yaml.
-'''bash
+```bash
 docker compose build
-'''
+```
 
 2.  **If you need to install Docker**
     Download and install from: <https://docs.docker.com/get-started/introduction/get-docker-desktop/>
 
 
 3. **Run "docker compose up"** - This will create and start our containers (instanstiations of our services or images).
-'''bash
+```bash
 docker compose up
-'''
+```
 
 4. **If you wish to develop on your local machine after cloning run:**
-'''bash
+```bash
 python -m venv venv
 venv\Scripts\activate
 cd Backend
 pip install -r requirements.txt
-'''
+```
 
 ## 🏗️ How to interact
 - Navigate to **LocalHost:8081** on your web browser of choice to interact with the MongoDB database
