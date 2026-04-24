@@ -1,0 +1,76 @@
+services:
+  backend:
+    image: mysite-backend
+    pull_policy: never
+    container_name: mysite-backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: runner
+    ports:
+      - 8000:8000
+    env_file:
+      - ./backend/.env
+    depends_on:
+    #depends_on is used to specify the dependencies between services. In this case, the backend service depends on the mongodb service, which means that the mongodb service will be started before the backend service. This ensures that the backend service can connect to the MongoDB database when it starts up, as the database will already be running and available for connections. By using depends_on, we can manage the startup order of our services and ensure that they are properly initialized before they start communicating with each other.
+      - mongodb
+
+  frontend:
+    image: mysite-frontend
+    #In order to ensure that the frontend image is always built from the local Dockerfile and not pulled from a registry, we set the pull policy to 'never'.
+    #We could also set the pull policy to pull from a repository if we wanted to use a pre-built image, but in this case, we want to build it locally every time.
+    pull_policy: never
+    container_name: mysite-frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      # No need for a target since the frontend Dockerfile doesn't have multiple stages
+    ports:
+      - 80:80
+
+#Run command: docker compose build - to build image.
+#Run command: docker compose up - to start the containers.
+#Run command: docker compose down - to stop the containers.
+#Run command: docker compose down --rmi all - to stop the containers and remove the images.
+#Run command: docker compose stop - to stop the containers without removing them.
+#Run command: docker compose start - to start the containers that were stopped without removing them.
+
+#Compose creates an isolated network for the services (containers) defined in the docker-compose.yml file. This allows the services to communicate with each other using their service names as hostnames. For example, the backend service can be accessed from the frontend service using the hostname 'backend' and the port 8000.
+
+  mongodb:
+    image: mongo:7.0.12
+    container_name: mysite-mongodb
+    #Will not specify port as we do not need to access MongoDB from outside the Docker network (host). Compose creates an isolated newtork for our services and thus the backend service can access MongoDB as all servers within compose can communicate with each other.
+    #Additionally, the services can refer to each other by their service names (e.g., 'monogodb'). This allows the backend service to connect to MongoDB using the hostname 'monogodb' without needing to expose the port to the host machine.
+    #Exposing the MongoDB port to the host machine can pose security risks, as it could allow unauthorized access to the database if not properly secured. By not exposing the port, we reduce the attack surface and enhance the security of our application.
+    #ports:
+    #  - 27017:27017
+    #Since we want to persist the data in MongoDB even if the container is stopped or removed, we will use a named volume to store the MongoDB data. This way, the data will be stored on the host machine and will not be lost when the container is removed.
+    volumes:
+    #The 'mongodb_data' volume will be mounted to the '/data/db' directory inside the MongoDB container, which is the default location where MongoDB stores its data. This allows MongoDB to read and write data to the volume, ensuring that our database remains persistent even if the container is stopped or removed.
+      - mongodb_data:/data/db
+    #We will not hardcode the MongoDB credentials in the docker-compose.yml file for security reasons. Instead, we will use environment variables to set the MongoDB root username and password. This way, we can keep our credentials secure and easily manage them without having to modify the docker-compose.yml file. We can set the environment variables in a separate .env file or use Docker secrets for even better security. By using environment variables, we can also easily change the credentials without having to rebuild the Docker image or modify the docker-compose.yml file, making it more flexible and secure for our application.
+    # environment:
+    #   MONGO_INITDB_ROOT_USERNAME: root
+    #   MONGO_INITDB_ROOT_PASSWORD: password
+    env_file:
+      - ./mongodb/.env
+
+  mongo-express:
+  #The 'mongo-express' service is a web-based MongoDB admin interface that allows us to manage and interact with our MongoDB database through a user-friendly interface. It provides features such as viewing and editing collections, running queries, and managing indexes, making it easier to work with our MongoDB data without needing to use the command line or other tools.
+    image: mongo-express:1.0.2
+    container_name: mysite-mongo-express
+    ports:
+      - 8081:8081
+    env_file:
+      - ./mongo-express/.env
+    #The 'mongo-express' service is a web-based MongoDB admin interface that allows us to manage and interact with our MongoDB database through a user-friendly interface. It provides features such as viewing and editing collections, running queries, and managing indexes, making it easier to work with our MongoDB data without needing to use the command line or other tools.
+
+volumes:
+#Default volume name is the same as the service name, but we can specify a custom name for the volume if we want to. In this case, we will use 'mongodb_data' as the name of the volume for MongoDB data.
+#By using a named volume, we can easily manage the data and ensure that it persists across container restarts and removals. The data stored in the 'mongodb_data' volume will be available even if the MongoDB container is stopped or removed, allowing us to maintain the integrity of our database.
+#The 'mongodb_data' volume will be created automatically by Docker Compose when we run the 'docker compose up' command, and it will be stored on the host machine in a location managed by Docker. We can also inspect the volume and its contents using Docker commands if needed.
+#By using a named volume for MongoDB data, we can ensure that our database remains persistent and secure, while also allowing for easy management and access to the data as needed.
+
+#Since the default volume options are sufficient for our use case, we do not need to specify any additional options for the 'mongodb_data' volume. Docker will handle the creation and management of the volume automatically, allowing us to focus on developing and running our application without worrying about the underlying storage details.
+  mongodb_data:

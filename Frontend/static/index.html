@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG System Frontend</title>
+</head>
+<body>
+    <h1>Todo List</h1>
+    <input type="text" id="new-task" placeholder="Add a new task...">
+    <button onclick="addTask()">Add Task</button>
+    <ul id="task-list"></ul>
+    <script>
+        const API_URL = 'http://localhost:8000';
+        
+        async function fetchTasks() {
+            const response = await fetch(`${API_URL}/todos`);
+            const tasks = await response.json();
+            const taskList = document.getElementById('task-list');
+            taskList.innerHTML = '';
+            tasks.forEach(task => {
+                const li = document.createElement('li');
+                li.textContent = task.content;
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.onclick = () => deleteTask(task._id);       
+                li.appendChild(deleteButton);
+                taskList.appendChild(li);
+            });
+        }
+
+        async function addTask() {
+            const taskInput = document.getElementById('new-task');
+            if(taskInput.value.trim() !== '') {
+                const response = await fetch(`${API_URL}/todos`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ content: taskInput.value })
+                });
+                if (response.ok) {
+                    taskInput.value = '';
+                    fetchTasks();
+                }
+            }
+        }
+
+        async function deleteTask(id) {
+            const response = await fetch(`${API_URL}/todos/${id}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                fetchTasks();
+            }
+        }
+
+        // Fetch tasks on page load
+        fetchTasks();
+
+    </script>
+</body>
+</html>
