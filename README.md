@@ -2,6 +2,8 @@
 
 The implementation is thanks to: [Docker Tutorial for Beginners](https://www.youtube.com/watch?v=b0HMimUb4f0)
 
+<!-- [![](./readme-assets/thumbnail-yt.png)](https://www.youtube.com/watch?v=b0HMimUb4f0) -->
+
 ## 📄 Overview
 The project creates a compose stack of 4 services which ultimately creates a website with a MongoDB Database to store our data. The MongoDB data ensures our data is not lost when we turn off our service (persistence). The 4 services created are mysite-frontend, mysite-backend, mongo-express, mongo. Mongo-express allows us to connect, view and manage our MongoDB database from a browser instead of using the command line. We can browse data, edit data, manage collections, and run queries from the browser.
 
