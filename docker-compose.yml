@@ -30,7 +30,7 @@ services:
     pull_policy: never
     container_name: mysite-frontend
     build:
-      context: ./frontend
+      context: ./Frontend
       dockerfile: Dockerfile
       # No need for a target since the frontend Dockerfile doesn't have multiple stages
     ports:
