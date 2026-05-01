@@ -4,13 +4,13 @@ services:
     pull_policy: never
     container_name: mysite-backend
     build:
-      context: ./backend
+      context: ./Backend
       dockerfile: Dockerfile
       target: runner
     ports:
       - 8000:8000
     env_file:
-      - ./backend/.env
+      - ./Backend/.env
     depends_on:
     #depends_on is used to specify the dependencies between services. In this case, the backend service depends on the mongodb service, which means that the mongodb service will be started before the backend service. This ensures that the backend service can connect to the MongoDB database when it starts up, as the database will already be running and available for connections. By using depends_on, we can manage the startup order of our services and ensure that they are properly initialized before they start communicating with each other.
       mongodb:
