@@ -1,0 +1,77 @@
+name: docker-build.yml 
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  compose-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out the repository
+      uses: actions/checkout@v4 #This action checks out the repository so that the workflow can access the code and files needed to build the Docker images and run the tests on the virtual environment provided by GitHub Actions.
+
+    - name: start docker compose
+      run: docker compose up -d --build #--build to ensure that the latest changes are included in the build
+
+    - name: show running containers
+      run: docker compose ps
+
+    - name: Wait for the backend service to be healthy
+    #This step is crucial to ensure that the backend service is fully initialized and ready to accept requests before we proceed with running tests. By checking the health status of the backend service, we can avoid potential issues that may arise from trying to run tests against an unresponsive or unhealthy service, which could lead to false negatives in our test results. This step will continuously check the health status of the backend service every 5 seconds until it is marked as healthy, ensuring that our tests are run against a stable and responsive backend.
+      timeout-minutes: 2 #This sets a timeout for this step to prevent it from running indefinitely in case the backend service fails to become healthy. If the backend service does not become healthy within 2 minutes, this step will fail, and the workflow will stop, allowing us to investigate the issue without waiting indefinitely.
+      run: |
+        echo "Waiting for the backend service to be healthy..."
+        while ! docker compose ps | grep backend | grep "healthy"; do
+          sleep 5
+        done
+        echo "Backend service is healthy. Proceeding with tests."
+      
+    - name: wait for the frontend service to be healthy
+    #Similar to the previous step, this step ensures that the frontend service is fully initialized and ready to accept requests before we proceed with running tests. By checking the health status of the frontend service, we can avoid potential issues that may arise from trying to run tests against an unresponsive or unhealthy service, which could lead to false negatives in our test results. This step will continuously check the health status of the frontend service every 5 seconds until it is marked as healthy, ensuring that our tests are run against a stable and responsive frontend.
+      run: |
+        echo "Waiting for the frontend service to be healthy..."
+        timeout = 120
+        elapsed = 0
+        while ! docker compose ps | grep frontend | grep "healthy"; do
+          sleep 5
+          elapsed=$((elapsed + 5))
+          if [ $elapsed -ge $timeout ]; then
+            echo "Frontend service failed to become healthy within the timeout period."
+            docker compose ps
+            exit 1
+          fi
+        done
+        echo "Frontend service is healthy. Proceeding with tests."
+
+    - name: wait for mongodb to be healthy
+      timeout-minutes: 2
+      run: |
+        echo "Waiting for the mongodb service to be healthy..."
+        while ! docker compose ps | grep mongodb | grep "healthy"; do
+          sleep 5
+        done
+        echo "MongoDB service is healthy. Proceeding with tests."
+
+    - name: wait for mongo-express to be healthy
+      timeout-minutes: 2
+      run: |
+        echo "Waiting for the mongo-express service to be healthy..."
+        while ! docker compose ps | grep mongo-express | grep "healthy"; do
+          sleep 5
+        done
+        echo "Mongo-express service is healthy. Proceeding with tests."
+    - name: Run tests
+      run: |
+        echo "Running tests..." #Replace this with the actual command to run your tests, e.g., docker compose exec backend pytest or similar command depending on how you have set up your tests.
+        curl -f http://localhost:8080/api/ping || exit 1 #Example of a simple test to check if the frontend service is responding. Replace this with your actual test commands.
+      
+    - name: Dump logs if tests fail
+      if: failure() #This step will only run if the previous step (running tests) fails. It will dump the logs of all the services to help with debugging.
+      run: docker compose logs
+
+    - name: Stop docker compose
+      run: docker compose down -v

@@ -13,7 +13,15 @@ services:
       - ./backend/.env
     depends_on:
     #depends_on is used to specify the dependencies between services. In this case, the backend service depends on the mongodb service, which means that the mongodb service will be started before the backend service. This ensures that the backend service can connect to the MongoDB database when it starts up, as the database will already be running and available for connections. By using depends_on, we can manage the startup order of our services and ensure that they are properly initialized before they start communicating with each other.
-      - mongodb
+      mongodb:
+        condition: service_healthy #The condition: service_healthy option ensures that the backend service will only start after the mongodb service is considered healthy based on its defined healthcheck. This adds an extra layer of reliability to our application, as it ensures that the backend service will not attempt to connect to the MongoDB database until it is fully operational and ready to accept connections. By using this option, we can prevent potential issues that may arise if the backend service tries to connect to an unhealthy or unresponsive MongoDB service, improving the overall stability and performance of our application.
+    #The healthcheck for the backend service is defined to check if the FastAPI application is running and healthy. It uses curl to send a request to the /docs endpoint of the backend service, which is a common endpoint for FastAPI applications that provides API documentation. If the request is successful and returns a response, it indicates that the backend service is up and running. The healthcheck will be performed every 10 seconds, with a timeout of 5 seconds, and it will retry up to 5 times before considering the service as unhealthy. The start_period of 10 seconds allows the service some time to initialize before the healthcheck starts checking its status.
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   frontend:
     image: mysite-frontend
@@ -27,6 +35,12 @@ services:
       # No need for a target since the frontend Dockerfile doesn't have multiple stages
     ports:
       - 80:80
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 #Run command: docker compose build - to build image.
 #Run command: docker compose up - to start the containers.
@@ -55,6 +69,12 @@ services:
     #   MONGO_INITDB_ROOT_PASSWORD: password
     env_file:
       - ./mongodb/.env
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --eval 'db.adminCommand({ ping: 1 }).ok localhost:27017/test' | grep 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
 
   mongo-express:
   #The 'mongo-express' service is a web-based MongoDB admin interface that allows us to manage and interact with our MongoDB database through a user-friendly interface. It provides features such as viewing and editing collections, running queries, and managing indexes, making it easier to work with our MongoDB data without needing to use the command line or other tools.
@@ -64,6 +84,16 @@ services:
       - 8081:8081
     env_file:
       - ./mongo-express/.env
+    depends_on:
+      mongodb:
+        condition: service_healthy #The 'mongo-express' service depends on the 'mongodb' service, which means that the 'mongodb' service will be started before the 'mongo-express' service. This ensures that the MongoDB database is up and running before the mongo-express interface tries to connect to it. By using this dependency, we can prevent potential issues that may arise if the mongo-express service tries to connect to an unhealthy or unresponsive MongoDB service, improving the overall stability and performance of our application.
+    #The healthcheck for the 'mongo-express' service is defined to check if the web interface is running and healthy. It uses curl to send a request to the root endpoint of the mongo-express service, which should return a response if the service is up and running. The healthcheck will be performed every 10 seconds, with a timeout of 5 seconds, and it will retry up to 5 times before considering the service as unhealthy. The start_period of 15 seconds allows the service some time to initialize before the healthcheck starts checking its status. By defining this healthcheck, we can ensure that the mongo-express service is properly initialized and ready to accept connections before it is considered healthy, improving the reliability of our application.
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     #The 'mongo-express' service is a web-based MongoDB admin interface that allows us to manage and interact with our MongoDB database through a user-friendly interface. It provides features such as viewing and editing collections, running queries, and managing indexes, making it easier to work with our MongoDB data without needing to use the command line or other tools.
 
 volumes:

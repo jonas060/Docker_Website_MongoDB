@@ -1,0 +1,11 @@
+# Root project requirements - Optional for local development and project management
+# These are not required to run Docker Compose, but useful for development workflows
+
+# Docker Compose management
+docker-compose>=2.0.0
+
+# Optional: Pre-commit hooks for code quality
+pre-commit>=3.0.0
+
+# Optional: Development utilities
+python-dotenv>=1.0.0

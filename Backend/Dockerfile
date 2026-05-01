@@ -30,6 +30,9 @@ RUN pip wheel --no-cache-dir --no-deps --wheel-dir wheels .
 #Now we will create the runner stage. This stage will be used to run the application. We will copy the wheel files from the builder stage and install them in this stage. We will also copy the source code of the application in this stage and install it as a package.
 FROM python:3.12-slim AS runner
 
+#Install curl for health checks
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
 COPY --from=builder /app/wheels /wheels
 #install the dependencies from the wheel files and then remove the wheel files to save space in the image. All within one layer to minimize the number of layers in the image.
 #Another benefit is potentially squashing creates and deletes which cancel one another out, which can further reduce the image size.
