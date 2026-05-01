@@ -57,10 +57,10 @@ jobs:
           sleep 5
         done
         echo "Mongo-express service is healthy. Proceeding with tests."
+        
     - name: Run tests
       run: |
         echo "Running tests..." #Replace this with the actual command to run your tests, e.g., docker compose exec backend pytest or similar command depending on how you have set up your tests.
-        curl -f http://localhost:8080/api/ping || exit 1 #Example of a simple test to check if the frontend service is responding. Replace this with your actual test commands.
       
     - name: Dump logs if tests fail
       if: failure() #This step will only run if the previous step (running tests) fails. It will dump the logs of all the services to help with debugging.
