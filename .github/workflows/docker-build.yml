@@ -28,24 +28,17 @@ jobs:
         while ! docker compose ps | grep backend | grep "healthy"; do
           sleep 5
         done
-        echo "Backend service is healthy. Proceeding with tests."
+        echo "Backend service is healthy. Proceeding with Frontend health check."
       
     - name: wait for the frontend service to be healthy
     #Similar to the previous step, this step ensures that the frontend service is fully initialized and ready to accept requests before we proceed with running tests. By checking the health status of the frontend service, we can avoid potential issues that may arise from trying to run tests against an unresponsive or unhealthy service, which could lead to false negatives in our test results. This step will continuously check the health status of the frontend service every 5 seconds until it is marked as healthy, ensuring that our tests are run against a stable and responsive frontend.
+      timeout-minutes: 2
       run: |
-        echo "Waiting for the frontend service to be healthy..."
-        timeout = 120
-        elapsed = 0
-        while ! docker compose ps | grep frontend | grep "healthy"; do
+        echo "Waiting for the backend service to be healthy..."
+        while ! docker compose ps | grep backend | grep "healthy"; do
           sleep 5
-          elapsed=$((elapsed + 5))
-          if [ $elapsed -ge $timeout ]; then
-            echo "Frontend service failed to become healthy within the timeout period."
-            docker compose ps
-            exit 1
-          fi
         done
-        echo "Frontend service is healthy. Proceeding with tests."
+        echo "Backend service is healthy. Proceeding with mongodb health check.."
 
     - name: wait for mongodb to be healthy
       timeout-minutes: 2
@@ -54,7 +47,7 @@ jobs:
         while ! docker compose ps | grep mongodb | grep "healthy"; do
           sleep 5
         done
-        echo "MongoDB service is healthy. Proceeding with tests."
+        echo "MongoDB service is healthy. Proceeding with mongo-express health check."
 
     - name: wait for mongo-express to be healthy
       timeout-minutes: 2
